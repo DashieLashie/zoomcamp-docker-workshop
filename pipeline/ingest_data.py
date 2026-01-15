@@ -1,11 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[12]:
-
-
-import pandas as pd
 import click
+import pandas as pd
 from sqlalchemy import create_engine
 from tqdm.auto import tqdm
 
@@ -33,6 +30,7 @@ parse_dates = [
     "tpep_dropoff_datetime"
 ]
 
+
 @click.command()
 @click.option('--pg-user', default='root', help='PostgreSQL user')
 @click.option('--pg-pass', default='root', help='PostgreSQL password')
@@ -43,23 +41,23 @@ parse_dates = [
 @click.option('--month', default=1, type=int, help='Month of the data')
 @click.option('--target-table', default='yellow_taxi_data', help='Target table name')
 @click.option('--chunksize', default=100000, type=int, help='Chunk size for reading CSV')
-
-
 def run(pg_user, pg_pass, pg_host, pg_port, pg_db, year, month, target_table, chunksize):
-
     """Ingest NYC taxi data into PostgreSQL database."""
-
     prefix = 'https://github.com/DataTalksClub/nyc-tlc-data/releases/download/yellow'
     url = f'{prefix}/yellow_tripdata_{year}-{month:02d}.csv.gz'
+    
+    """https://github.com/DataTalksClub/nyc-tlc-data/releases/download/yellow/yellow_tripdata_2019-01.csv.gz"""
+    
+    print(f'Ingesting data from {url} to table {target_table} in database {pg_db}')
 
-    engine = create_engine('postgresql://root:root@localhost:5432/ny_taxi')
+    engine = create_engine(f'postgresql://{pg_user}:{pg_pass}@{pg_host}:{pg_port}/{pg_db}')
 
     df_iter = pd.read_csv(
-        prefix + 'yellow_tripdata_2021-01.csv.gz',
+        url,
         dtype=dtype,
         parse_dates=parse_dates,
         iterator=True,
-        chunksize=100000
+        chunksize=chunksize,
     )
 
     first = True
@@ -81,4 +79,3 @@ def run(pg_user, pg_pass, pg_host, pg_port, pg_db, year, month, target_table, ch
 
 if __name__ == '__main__':
     run()
-
